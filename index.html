@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System Planet Data</title>
+    <link rel="icon" href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3cdefs%3e%3clinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3e%3cstop offset='0%25' style='stop-color:%23667eea;stop-opacity:1' /%3e%3cstop offset='100%25' style='stop-color:%23764ba2;stop-opacity:1' /%3e%3c/linearGradient%3e%3c/defs%3e%3ccircle cx='50' cy='50' r='30' fill='url(%23grad)'/%3e%3cellipse cx='50' cy='50' rx='45' ry='15' fill='none' stroke='white' stroke-width='5' transform='rotate(-20 50 50)'/%3e%3c/svg%3e">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 1.5rem 2rem;
+            background: #f7fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        .legend {
+            background: #edf2f7;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+
+        .legend strong {
+            color: #2d3748;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            position: relative;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        caption {
+            padding: 1.5rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #4a5568;
+            text-align: left;
+            background: white;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 1rem 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            transition: background-color 0.2s ease;
+        }
+
+        th:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        th:focus {
+            outline: 2px solid #ffd700;
+            outline-offset: -2px;
+        }
+
+        .sort-indicator {
+            margin-left: 0.5rem;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        th:hover .sort-indicator,
+        th.sorted .sort-indicator {
+            opacity: 1;
+        }
+
+        td, th {
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tbody tr {
+            transition: background-color 0.15s ease, transform 0.15s ease;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        tbody tr:hover {
+            background: #e6fffa;
+            transform: translateX(2px);
+            box-shadow: inset 4px 0 0 #4299e1;
+        }
+
+        td {
+            padding: 1rem 0.75rem;
+            vertical-align: middle;
+        }
+
+        .planet-name {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .number-cell {
+            text-align: right;
+            font-feature-settings: 'tnum';
+            font-variant-numeric: tabular-nums;
+        }
+
+        .rings-yes {
+            color: #38a169;
+            font-weight: 600;
+        }
+
+        .rings-no {
+            color: #e53e3e;
+            font-weight: 600;
+        }
+
+        .order-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            min-width: 2rem;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #718096;
+            font-style: italic;
+        }
+
+        .footer {
+            padding: 1.5rem 2rem;
+            text-align: center;
+            color: #718096;
+            font-size: 0.9rem;
+            background: #f7fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem 0.5rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .controls {
+                padding: 1rem;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                min-width: unset;
+            }
+
+            table {
+                font-size: 0.85rem;
+            }
+
+            th, td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            caption {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 1.5rem 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            th, td {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Focus styles for accessibility */
+        th:focus,
+        input:focus {
+            outline: 2px solid #4299e1;
+            outline-offset: 2px;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Animation for row hover */
+        @keyframes highlight {
+            0% { background-color: inherit; }
+            50% { background-color: #e6fffa; }
+            100% { background-color: inherit; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Solar System Planets</h1>
+            <p>Complete dataset of planetary characteristics and orbital properties</p>
+        </header>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search planets by name..." autocomplete="off" aria-label="Search planets">
+            </div>
+        </div>
+
+        <div class="legend">
+            <strong>Units:</strong> Mean Radius (km), Mass (×10²⁴ kg), Gravity (m/s²), Orbital Period (Earth days), Temperature (°C)
+        </div>
+
+        <div class="table-container">
+            <table id="planetTable" role="table" aria-label="Solar System Planet Data">
+                <caption>
+                    Comprehensive data about the eight planets in our solar system, including physical characteristics, orbital properties, and notable features.
+                </caption>
+                <thead>
+                    <tr role="row">
+                        <th scope="col" tabindex="0" data-column="order" role="columnheader" aria-sort="none">
+                            Order <span class="sort-indicator">↕</span>
+                        </th>
+                        <th scope="col" tabindex="0" data-column="name" role="columnheader" aria-sort="none">
+                            Planet Name <span class="sort-indicator">↕</span>
+                        </th>
+                        <th scope="col" tabindex="0" data-column="radius" role="columnheader" aria-sort="none">
+                            Mean Radius <span class="sort-indicator">↕</span>
+                        </th>
+                        <th scope="col" tabindex="0" data-column="mass" role="columnheader" aria-sort="none">
+                            Mass <span class="sort-indicator">↕</span>
+                        </th>
+                        <th scope="col" tabindex="0" data-column="gravity" role="columnheader" aria-sort="none">
+                            Gravity <span class="sort-indicator">↕</span>
+                        </th>
+                        <th scope="col" tabindex="0" data-column="period" role="columnheader" aria-sort="none">
+                            Orbital Period <span class="sort-indicator">↕</span>
+                        </th>
+                        <th scope="col" tabindex="0" data-column="moons" role="columnheader" aria-sort="none">
+                            Moons <span class="sort-indicator">↕</span>
+                        </th>
+                        <th scope="col" tabindex="0" data-column="rings" role="columnheader" aria-sort="none">
+                            Has Rings <span class="sort-indicator">↕</span>
+                        </th>
+                        <th scope="col" tabindex="0" data-column="temperature" role="columnheader" aria-sort="none">
+                            Avg Temp <span class="sort-indicator">↕</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr role="row">
+                        <td><span class="order-badge">1</span></td>
+                        <th scope="row" class="planet-name">Mercury</th>
+                        <td class="number-cell">2,439.7</td>
+                        <td class="number-cell">0.330</td>
+                        <td class="number-cell">3.7</td>
+                        <td class="number-cell">87.97</td>
+                        <td class="number-cell">0</td>
+                        <td><span class="rings-no">No</span></td>
+                        <td class="number-cell">167</td>
+                    </tr>
+                    <tr role="row">
+                        <td><span class="order-badge">2</span></td>
+                        <th scope="row" class="planet-name">Venus</th>
+                        <td class="number-cell">6,051.8</td>
+                        <td class="number-cell">4.87</td>
+                        <td class="number-cell">8.87</td>
+                        <td class="number-cell">224.70</td>
+                        <td class="number-cell">0</td>
+                        <td><span class="rings-no">No</span></td>
+                        <td class="number-cell">464</td>
+                    </tr>
+                    <tr role="row">
+                        <td><span class="order-badge">3</span></td>
+                        <th scope="row" class="planet-name">Earth</th>
+                        <td class="number-cell">6,371.0</td>
+                        <td class="number-cell">5.97</td>
+                        <td class="number-cell">9.8</td>
+                        <td class="number-cell">365.26</td>
+                        <td class="number-cell">1</td>
+                        <td><span class="rings-no">No</span></td>
+                        <td class="number-cell">15</td>
+                    </tr>
+                    <tr role="row">
+                        <td><span class="order-badge">4</span></td>
+                        <th scope="row" class="planet-name">Mars</th>
+                        <td class="number-cell">3,389.5</td>
+                        <td class="number-cell">0.642</td>
+                        <td class="number-cell">3.71</td>
+                        <td class="number-cell">686.98</td>
+                        <td class="number-cell">2</td>
+                        <td><span class="rings-no">No</span></td>
+                        <td class="number-cell">-65</td>
+                    </tr>
+                    <tr role="row">
+                        <td><span class="order-badge">5</span></td>
+                        <th scope="row" class="planet-name">Jupiter</th>
+                        <td class="number-cell">69,911</td>
+                        <td class="number-cell">1,898</td>
+                        <td class="number-cell">23.1</td>
+                        <td class="number-cell">4,332.59</td>
+                        <td class="number-cell">95</td>
+                        <td><span class="rings-yes">Yes</span></td>
+                        <td class="number-cell">-110</td>
+                    </tr>
+                    <tr role="row">
+                        <td><span class="order-badge">6</span></td>
+                        <th scope="row" class="planet-name">Saturn</th>
+                        <td class="number-cell">58,232</td>
+                        <td class="number-cell">568</td>
+                        <td class="number-cell">9.0</td>
+                        <td class="number-cell">10,759.22</td>
+                        <td class="number-cell">146</td>
+                        <td><span class="rings-yes">Yes</span></td>
+                        <td class="number-cell">-140</td>
+                    </tr>
+                    <tr role="row">
+                        <td><span class="order-badge">7</span></td>
+                        <th scope="row" class="planet-name">Uranus</th>
+                        <td class="number-cell">25,362</td>
+                        <td class="number-cell">86.8</td>
+                        <td class="number-cell">8.7</td>
+                        <td class="number-cell">30,688.5</td>
+                        <td class="number-cell">27</td>
+                        <td><span class="rings-yes">Yes</span></td>
+                        <td class="number-cell">-195</td>
+                    </tr>
+                    <tr role="row">
+                        <td><span class="order-badge">8</span></td>
+                        <th scope="row" class="planet-name">Neptune</th>
+                        <td class="number-cell">24,622</td>
+                        <td class="number-cell">102</td>
+                        <td class="number-cell">11.0</td>
+                        <td class="number-cell">60,182</td>
+                        <td class="number-cell">16</td>
+                        <td><span class="rings-yes">Yes</span></td>
+                        <td class="number-cell">-200</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div id="noResults" class="no-results" style="display: none;">
+                No planets found matching your search criteria.
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>Data sourced By ebinreji@mulearn From NASA</p>
+        </footer>
+    </div>
+
+    <script>
+        class PlanetTable {
+            constructor() {
+                this.table = document.getElementById('planetTable');
+                this.tableBody = document.getElementById('tableBody');
+                this.searchInput = document.getElementById('searchInput');
+                this.noResults = document.getElementById('noResults');
+                
+                this.currentSort = { column: null, direction: 'asc' };
+                this.originalRows = Array.from(this.tableBody.querySelectorAll('tr'));
+                
+                this.init();
+            }
+
+            init() {
+                this.setupSorting();
+                this.setupSearch();
+            }
+
+            setupSorting() {
+                const headers = this.table.querySelectorAll('th[data-column]');
+                headers.forEach(header => {
+                    header.addEventListener('click', () => this.handleSort(header));
+                    header.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            this.handleSort(header);
+                        }
+                    });
+                });
+            }
+
+            setupSearch() {
+                let searchTimeout;
+                this.searchInput.addEventListener('input', (e) => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        this.handleSearch(e.target.value);
+                    }, 150);
+                });
+            }
+
+            handleSort(header) {
+                const column = header.dataset.column;
+                
+                // Determine sort direction
+                if (this.currentSort.column === column) {
+                    this.currentSort.direction = this.currentSort.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    this.currentSort.direction = 'asc';
+                }
+                this.currentSort.column = column;
+
+                // Update header aria-sort attributes
+                this.table.querySelectorAll('th[data-column]').forEach(th => {
+                    th.setAttribute('aria-sort', 'none');
+                    th.classList.remove('sorted');
+                    const indicator = th.querySelector('.sort-indicator');
+                    indicator.textContent = '↕';
+                });
+
+                header.setAttribute('aria-sort', this.currentSort.direction === 'asc' ? 'ascending' : 'descending');
+                header.classList.add('sorted');
+                const indicator = header.querySelector('.sort-indicator');
+                indicator.textContent = this.currentSort.direction === 'asc' ? '↑' : '↓';
+
+                // Sort the rows
+                this.sortRows();
+            }
+
+            sortRows() {
+                const rows = Array.from(this.tableBody.querySelectorAll('tr:not([style*="display: none"])'));
+                const columnIndex = this.getColumnIndex(this.currentSort.column);
+                
+                rows.sort((a, b) => {
+                    let aVal = this.getCellValue(a, columnIndex);
+                    let bVal = this.getCellValue(b, columnIndex);
+
+                    // Handle different data types
+                    if (this.currentSort.column === 'rings') {
+                        aVal = aVal === 'Yes' ? 1 : 0;
+                        bVal = bVal === 'Yes' ? 1 : 0;
+                    } else if (!isNaN(parseFloat(aVal)) && !isNaN(parseFloat(bVal))) {
+                        aVal = parseFloat(aVal);
+                        bVal = parseFloat(bVal);
+                    }
+
+                    let result = 0;
+                    if (aVal > bVal) result = 1;
+                    else if (aVal < bVal) result = -1;
+
+                    return this.currentSort.direction === 'asc' ? result : -result;
+                });
+
+                // Re-append sorted rows
+                rows.forEach(row => this.tableBody.appendChild(row));
+            }
+
+            getColumnIndex(column) {
+                const headers = this.table.querySelectorAll('th[data-column]');
+                for (let i = 0; i < headers.length; i++) {
+                    if (headers[i].dataset.column === column) {
+                        return i;
+                    }
+                }
+                return 0;
+            }
+
+            getCellValue(row, columnIndex) {
+                const cells = row.querySelectorAll('td, th');
+                // BUG FIX: The cell index directly corresponds to the header index.
+                // The previous code had `columnIndex + 1`, which caused incorrect sorting.
+                const cell = cells[columnIndex]; 
+                return cell ? cell.textContent.trim().replace(/,/g, '') : '';
+            }
+
+            handleSearch(searchTerm) {
+                const term = searchTerm.toLowerCase().trim();
+                let visibleCount = 0;
+
+                this.originalRows.forEach(row => {
+                    const planetName = row.querySelector('.planet-name').textContent.toLowerCase();
+                    const isVisible = term === '' || planetName.includes(term);
+                    
+                    row.style.display = isVisible ? '' : 'none';
+                    if (isVisible) visibleCount++;
+                });
+
+                // Show/hide no results message
+                this.noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+                
+                // Re-apply sorting if active
+                if (this.currentSort.column) {
+                    this.sortRows();
+                }
+            }
+        }
+
+        // Initialize the table when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new PlanetTable();
+        });
+    </script>
+</body>
+</html>
